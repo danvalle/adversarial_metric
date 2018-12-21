@@ -11,13 +11,6 @@ def load_data():
     return data
 
 
-def normalize(tensor):
-    min_value = tensor.min()
-    rg = tensor.max() - min_value
-    print(tensor.min(), tensor.max())
-    return (tensor - min_value) / rg
-
-
 def visualization(tensor, file_path, file_name, image):
     tensor.abs_()
     
@@ -28,13 +21,13 @@ def visualization(tensor, file_path, file_name, image):
     complete_path = file_path + 'clamp/'
     if not os.path.exists(complete_path):
         os.makedirs(complete_path)
-    save_image(tensor*1000, complete_path+file_name, normalize=True)
+    save_image(tensor, complete_path+file_name, normalize=True)
 
     # Relevance map
     complete_path = file_path + 'map/'
     if not os.path.exists(complete_path):
         os.makedirs(complete_path)
-    save_image(tensor.sum(dim=0)*1000, complete_path+file_name, normalize=True)
+    save_image(tensor.sum(dim=0), complete_path+file_name, normalize=True)
 
     # Relevance x image / 3 channels and map
     tensor.mul_(image)
@@ -42,9 +35,9 @@ def visualization(tensor, file_path, file_name, image):
     complete_path = file_path + 'final/'
     if not os.path.exists(complete_path):
         os.makedirs(complete_path)
-    save_image(tensor*1000, complete_path+file_name, normalize=True)
+    save_image(tensor, complete_path+file_name, normalize=True)
 
     complete_path = file_path + 'final_map/'
     if not os.path.exists(complete_path):
         os.makedirs(complete_path)
-    save_image(tensor.sum(dim=0)*1000, complete_path+file_name, normalize=True)
+    save_image(tensor.sum(dim=0), complete_path+file_name, normalize=True)
