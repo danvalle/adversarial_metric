@@ -51,37 +51,34 @@ def lrp(model, neurons, features_layers, classifier_layers, input):
 def main(num_images, device_name, seed):
     torch.manual_seed(seed)
     device = torch.device(device_name)
-    
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor()])
-    normalize = transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225])
 
     data = load_data()
     model = Extractor(models.vgg16(pretrained=True), 1, device)
+    model.eval()
 
     it = 0
-    print('Name,Label,Pred')
+    print('Name,Label,Pred', flush=True)
     for name, (img, label) in data.items():
-        image = Image.open(img)
-
-        image = transform(image).to(device=device)
-        X = normalize(image.clone())
-
+        image = Image.open(img).convert('RGB')
+        X = transform(image).to(device=device)
         target = torch.LongTensor([label]).to(device=device)
 
         neurons, features_layers, classifier_layers = model(X.unsqueeze(0))
-        print('{},{},{}'.format(
-            name, label, neurons[-1].argmax().item()))
+        if neurons[-1].argmax().item() != label:
+            continue
 
+        print('{},{},{}'.format(
+            name, label, neurons[-1].argmax().item()), flush=True)
+ 
         R = lrp(
             model, neurons,
             features_layers, classifier_layers,
             X.data.clone().unsqueeze(0))
 
-        visualization(R, 'img/lrp/', name+'.png', image)
+        visualization(R, 'img/lrp_t/', name+'.png', X)
 
         it += 1
         if it == num_images:
@@ -89,7 +86,7 @@ def main(num_images, device_name, seed):
 
 
 if __name__ == '__main__':
-    num_images = 15
+    num_images = 3
     device_name = 'cuda'
     seed = 0
 

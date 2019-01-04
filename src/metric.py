@@ -8,24 +8,20 @@ import torch.nn as nn
 import torchvision.models as models
 import torchvision.transforms as transforms
 from torchvision.utils import save_image
-import matplotlib.pyplot as plt
 
 from utils import load_data, visualization
 
 
-def adv_test(model, img, label, sigma, rel, adv=True):
-    sign = -1 if adv else 1
-    new_image = img + adv*sigma*rel
-    # save_image(new_image, 'test_image.png')
+def adv_test(model, img, label, sigma, rel):
+    new_image = img + sigma*rel
 
     out = model(new_image.unsqueeze(0))
     return out.argmax().item() == label
 
 
-def adv_tests(model, img, label, sigma, rel, adv=True):
-    sign = -1 if adv else 1
-    new_image = img.unsqueeze(0).repeat(rel.size(0), 1, 1, 1) + \
-                adv*sigma*rel
+def adv_tests(model, img, label, sigma, rel):
+    new_image = img.unsqueeze(0).repeat(rel.size(0), 1, 1, 1) + sigma*rel
+    
     out = model(new_image)
     return (out.argmax(dim=-1) == label).sum().item()
 
@@ -33,13 +29,9 @@ def adv_tests(model, img, label, sigma, rel, adv=True):
 def main(img_path, rel_path):
     torch.manual_seed(0)
     device = torch.device('cuda')
-
     transform = transforms.Compose([
         transforms.Resize((224,224)),
         transforms.ToTensor()])
-    normalize = transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225])
     to_tensor = transforms.ToTensor()
 
     model = models.vgg16(pretrained=True).to(device=device)
@@ -55,8 +47,7 @@ def main(img_path, rel_path):
         rel = to_tensor(rel_img).to(device=device)
         
         image = Image.open(img_path+name+'.JPEG').convert('RGB')
-        image = transform(image).to(device)
-        X = normalize(image.clone())
+        X = transform(image).to(device)
         X.requires_grad_()
         
         # label = data[name][1]
@@ -147,6 +138,6 @@ def main(img_path, rel_path):
 
 
 if __name__ == '__main__':
-    img_path = '/media/dan/CAGE/ILSVRC/Data/CLS-LOC/val/'
-    rel_path = 'img/simple_new/final_map/'
+    img_path = '/mnt/hd0/dan/ILSVRC/Data/CLS-LOC/val/'
+    rel_path = 'img/smooth/final_map/'
     main(img_path, rel_path)
